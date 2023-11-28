@@ -30,6 +30,29 @@ class Tilemap:
             # self.tilemap['10;' + str(5 + i)] = {'type': 'stone', 'variant': 1, 'pos': (10, 5 + i)}
             # self.tilemap['5;' + str(3 + i)] = {'type': 'grass', 'variant': 1, 'pos': (5, 3 + i)}
     
+    def extract(self, id_pairs, keep=False):
+        matches = []
+        # If there's a tile in offgrid which matches the id_pairs, then add them to matches
+        for tile in self.offgrid_tiles.copy():
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy())
+                # If not keep then remove them from offgrid tiles
+                if not keep:
+                    self.offgrid_tiles.remove(tile)
+        
+        # Same for tilemap tiles
+        for loc in self.tilemap:
+            tile = self.tilemap[loc]
+            if (tile['type'], tile['variant']) in id_pairs:
+                matches.append(tile.copy())
+                matches[-1]['pos'] = matches[-1]['pos'].copy()
+                matches[-1]['pos'][0] *= self.tile_size
+                matches[-1]['pos'][1] *= self.tile_size
+                if not keep:
+                    del self.tilemap[loc]
+            
+        return matches
+
     def tiles_around(self, pos):
         tiles=[]
         tile_loc = (int(pos[0] // self.tile_size), int(pos[1] // self.tile_size))

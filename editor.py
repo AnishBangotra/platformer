@@ -54,6 +54,7 @@ class Editor:
             
             # Getting current position 
             current_tile_img = self.assets[self.tile_list[self.tile_group]][self.tile_variant].copy()
+            # Making the current img alpha between transparent and opaque
             current_tile_img.set_alpha(100)
 
             # Getting the mouse position for an accurate tile position
