@@ -41,7 +41,7 @@ class Tilemap:
                     self.offgrid_tiles.remove(tile)
         
         # Same for tilemap tiles
-        for loc in self.tilemap:
+        for loc in self.tilemap.copy():
             tile = self.tilemap[loc]
             if (tile['type'], tile['variant']) in id_pairs:
                 matches.append(tile.copy())
@@ -74,6 +74,12 @@ class Tilemap:
         self.tilemap = map_data['tilemap']
         self.tile_size = map_data['tile_size']
         self.offgrid_tiles = map_data['offgrid']
+
+    def solid_check(self, pos):
+        tile_loc = str(int(pos[0] // self.tile_size)) + ';' + str(int(pos[1] // self.tile_size))
+        if tile_loc in self.tilemap:
+            if self.tilemap[tile_loc]['type'] in PHYSICS_TILES:
+                return self.tilemap[tile_loc]
 
     def physics_rects_around(self, pos):
         rects=[]
