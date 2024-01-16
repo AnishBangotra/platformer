@@ -93,33 +93,3 @@ and features specifically designed for game development. From collision
 detection to sprite management, pygame has everything you need to create
 exciting and engaging games. Whether you're building a platformer, puzzle
 game, or anything in between, pygame has you covered.
-
-Dependencies
-------------
-
-Pygame is obviously strongly dependent on SDL and Python.  It also
-links to and embeds several other smaller libraries.  The font
-module relies on SDL_ttf, which is dependent on freetype.  The mixer
-(and mixer.music) modules depend on SDL_mixer.  The image module
-depends on SDL_image, which also can use libjpeg and libpng.  The
-transform module has an embedded version of SDL_rotozoom for its
-own rotozoom function.  The surfarray module requires the Python
-NumPy package for its multidimensional numeric arrays.
-Dependency versions:
-
-`+----------+------------------------+
-| CPython  | >= 3.6 (Or use PyPy3)  |
-+----------+------------------------+
-| SDL      | >= 2.0.8               |
-+----------+------------------------+
-| SDL_mixer| >= 2.0.0               |
-+----------+------------------------+
-| SDL_image| >= 2.0.2               |
-+----------+------------------------+
-| SDL_ttf  | >= 2.0.11              |
-+----------+------------------------+
-| SDL_gfx  | (Optional, vendored in)|
-+----------+------------------------+
-| NumPy    | >= 1.6.2 (Optional)    |
-+----------+------------------------+
-`
