@@ -24,7 +24,7 @@ on your machine. To find out, open a command prompt (if you have
 Windows) or a terminal (if you have MacOS or Linux) and type this:
 ::
 
-   python --version
+   `python --version`
 
 
 If a message such as "Python 3.8.10" appears, it means that Python
@@ -38,7 +38,7 @@ Python but we are never sure. Same as for Python, type the following
 command:
 ::
 
-   pip --version
+   `pip --version`
 
 
 If a message such as "pip 20.0.2 from /usr/lib/python3/dist-packages/pip
@@ -46,7 +46,7 @@ If a message such as "pip 20.0.2 from /usr/lib/python3/dist-packages/pip
 it, enter this command:
 ::
 
-   pip install pygame
+   `pip install pygame`
 
 
 Help
@@ -107,8 +107,7 @@ own rotozoom function.  The surfarray module requires the Python
 NumPy package for its multidimensional numeric arrays.
 Dependency versions:
 
-
-+----------+------------------------+
+`+----------+------------------------+
 | CPython  | >= 3.6 (Or use PyPy3)  |
 +----------+------------------------+
 | SDL      | >= 2.0.8               |
@@ -123,5 +122,4 @@ Dependency versions:
 +----------+------------------------+
 | NumPy    | >= 1.6.2 (Optional)    |
 +----------+------------------------+
-
-
+`
