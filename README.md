@@ -1,10 +1,4 @@
-.. image:: https://raw.githubusercontent.com/pygame/pygame/main/docs/reST/_static/pygame_logo.svg
-  :alt: pygame
-  :target: https://www.pygame.org/
-
-
-|AppVeyorBuild| |PyPiVersion| |PyPiLicense|
-|Python3| |GithubCommits| |BlackFormatBadge|
+![Screenshot](Platformer.PNG)
 
 Pygame_ is a free and open-source cross-platform library
 for the development of multimedia applications like video games using Python.
