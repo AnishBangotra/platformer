@@ -6,10 +6,6 @@ It uses the `Simple DirectMedia Layer library`_ and several other
 popular libraries to abstract the most common functions, making writing
 these programs a more intuitive task.
 
-`We need your help`_ to make pygame the best it can be!
-New contributors are welcome.
-
-
 Installation
 ------------
 
