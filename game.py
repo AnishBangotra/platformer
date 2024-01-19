@@ -11,7 +11,8 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption("Ninja Game")
-        self.screen = pygame.display.set_mode((640, 480))
+        self.screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
+        self.bg_count = 0
         self.display = pygame.Surface((320, 240), pygame.SRCALPHA)
         self.display_2 = pygame.Surface((320, 240))
         self.clock = pygame.time.Clock()
@@ -22,7 +23,7 @@ class Game:
             'large_decor': load_images('tiles/large_decor'),
             'stone': load_images('tiles/stone'),
             'player': load_image('entities/player.png'),
-            'background': load_image('background.png'),
+            'background': load_image('background/{}.png'.format(self.bg_count)),
             'clouds': load_images('clouds'),
             'enemy/idle': Animation(load_images('entities/enemy/idle'), img_dur=6),
             'enemy/run': Animation(load_images('entities/enemy/run'), img_dur=4),
@@ -61,7 +62,7 @@ class Game:
 
     def load_level(self, map_id):
         self.tilemap.load('data/data/maps/' + str(map_id) + '.json')
-        
+
         # Keep true for trees because we don't want to remove them, we just need to spawn the leaves
         # At trees position
         self.leaf_spawners = []
@@ -99,10 +100,15 @@ class Game:
             
             self.screenshake = max(0, self.screenshake - 1)
 
+            # If all enemies are killed, play the transition and increase the level
             if not len(self.enemies):
                 self.transition += 1
                 if self.transition > 30:
                     self.level = min(self.level + 1, len(os.listdir('data/data/maps')) - 1)
+                    if self.bg_count == 2:self.bg_count = 0
+                    else:self.bg_count += 1
+                    self.assets['background'] = 0
+                    self.assets['background'] = load_image('background/{}.png'.format(self.bg_count))
                     self.load_level(self.level)
             if self.transition < 0:
                 self.transition += 1
@@ -179,6 +185,7 @@ class Game:
             
             # Making a mask for an outline surface
             display_mask = pygame.mask.from_surface(self.display)
+            # setColor 180 is half of max opaque
             display_sillhouette = display_mask.to_surface(setcolor=(0, 0, 0, 180), unsetcolor=(0, 0, 0, 0))
             for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                 self.display_2.blit(display_sillhouette, offset)
