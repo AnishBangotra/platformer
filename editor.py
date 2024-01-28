@@ -9,7 +9,7 @@ class Editor:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption("Editor")
-        self.screen = pygame.display.set_mode((640, 480))
+        self.screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
         self.display = pygame.Surface((320, 240))
         self.clock = pygame.time.Clock()
 

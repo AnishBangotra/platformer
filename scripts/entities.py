@@ -187,6 +187,11 @@ class Player(PhysicsEntity):
         super().update(tilemap, movement=movement)
         
         self.air_time += 1
+        
+        # Reducing the air time during wall slide
+        if self.wall_slide:
+           self.air_time -= 1 
+
         # if we more than 3sec in air, close the game
         if self.air_time > 180:
             if not self.game.dead:
