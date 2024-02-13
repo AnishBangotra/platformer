@@ -1,5 +1,5 @@
 import pygame, sys, random, math, os
-
+from menu import MainMenu, PauseMenu
 from scripts.entities import PhysicsEntity, Player, Enemy
 from scripts.utils import load_image, load_images, Animation
 from scripts.tilemap import Tilemap
@@ -12,10 +12,21 @@ class Game:
     def __init__(self):
         pygame.init()
         pygame.display.set_caption("Ninja Game")
-        self.screen = pygame.display.set_mode((640, 480), pygame.RESIZABLE)
+        self.running = True
+        self.playing = True
+        self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY = False, False, False, False
+        self.DISPLAY_W, self.DISPLAY_H = 640, 480
+
+        self.screen = pygame.display.set_mode((self.DISPLAY_W, self.DISPLAY_H), pygame.RESIZABLE)
         self.bg_count = 0
+        self.menu_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
+        self.pause_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
         self.display = pygame.Surface((320, 240), pygame.SRCALPHA)
         self.display_2 = pygame.Surface((320, 240))
+        self.main_menu = MainMenu(self)
+        self.curr_menu = self.main_menu
+        self.font_name1 = 'LobsterTwo-Bold.otf'
+        self.font_name = pygame.font.get_default_font()
         self.clock = pygame.time.Clock()
 
         self.assets = {
@@ -65,6 +76,14 @@ class Game:
         self.screenshake = 0
         # self.tilemap.load('map.json')
 
+    def draw_text(self, text, size, color, surface, x, y):
+        font = pygame.font.Font(self.font_name1, size)
+        text_surface = font.render(text, True, color)
+        text_rect = text_surface.get_rect()
+        text_rect.center = (x, y)
+        surface.blit(text_surface, text_rect)
+        return text_rect
+
     def load_level(self, map_id):
         # self.tilemap.load("map.json");
         self.tilemap.load("data/data/maps/" + str(map_id) + ".json")
@@ -95,232 +114,234 @@ class Game:
         self.transition = -30
 
     def run(self):
-        pygame.mixer.music.load("data/data/music.wav")
-        pygame.mixer.music.set_volume(0.5)
-        pygame.mixer.music.play(-1)
+        if self.playing:
+            pygame.mixer.music.load("data/data/music/music.wav")
+            pygame.mixer.music.set_volume(0.5)
+            pygame.mixer.music.play(-1)
+            self.sfx["ambience"].play(-1)
 
-        self.sfx["ambience"].play(-1)
+            while self.playing:
+                self.display.fill((0, 0, 0, 0))
+                # Using display_2 as without outline surface
+                self.display_2.blit(self.assets["background"], (0, 0))
 
-        while True:
-            self.display.fill((0, 0, 0, 0))
-            # Using display_2 as without outline surface
-            self.display_2.blit(self.assets["background"], (0, 0))
+                self.screenshake = max(0, self.screenshake - 1)
 
-            self.screenshake = max(0, self.screenshake - 1)
-
-            # If all enemies are killed, play the transition and increase the level
-            if not len(self.enemies):
-                self.transition += 1
-                if self.transition > 30:
-                    self.level = min(
-                        self.level + 1, len(os.listdir("data/data/maps")) - 1
-                    )
-                    if self.bg_count == 2:
-                        self.bg_count = 0
-                    else:
-                        self.bg_count += 1
-                    self.assets["background"] = 0
-                    self.assets["background"] = load_image(
-                        "background/{}.png".format(self.bg_count)
-                    )
-                    self.load_level(self.level)
-            if self.transition < 0:
-                self.transition += 1
-
-            # Restart the level after few frames with timer
-            if self.dead:
-                self.dead += 1
-                if self.dead >= 10:
-                    self.transition = min(30, self.transition + 1)
-                if self.dead > 40:
-                    self.load_level(self.level)
-
-            # Updating the camera scroll with position towards the player and removing the area till that point from the top left along with
-            # Scrolling till that point and taking 30% of the total
-            self.scroll[0] += (
-                self.player.rect().centerx
-                - self.display.get_width() / 2
-                - self.scroll[0]
-            ) / 30
-            self.scroll[1] += (
-                self.player.rect().centery
-                - self.display.get_height() / 2
-                - self.scroll[1]
-            ) / 30
-            render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
-
-            # Using 49999 as spawn rate for leaves falling
-            for rect in self.leaf_spawners:
-                if random.random() * 49999 < rect.width * rect.height:
-                    pos = (
-                        rect.x + random.random() * rect.width,
-                        rect.y + random.random() * rect.height,
-                    )
-                    self.particles.append(
-                        Particle(
-                            self,
-                            "leaf",
-                            pos,
-                            velocity=[-0.1, 0.3],
-                            frame=random.randint(0, 20),
+                # If all enemies are killed, play the transition and increase the level
+                if not len(self.enemies):
+                    self.transition += 1
+                    if self.transition > 30:
+                        self.level = min(
+                            self.level + 1, len(os.listdir("data/data/maps")) - 1
                         )
-                    )
+                        if self.bg_count == 2:
+                            self.bg_count = 0
+                        else:
+                            self.bg_count += 1
+                        self.assets["background"] = 0
+                        self.assets["background"] = load_image(
+                            "background/{}.png".format(self.bg_count)
+                        )
+                        self.load_level(self.level)
+                if self.transition < 0:
+                    self.transition += 1
 
-            self.clouds.update()
-            self.clouds.render(self.display_2, offset=render_scroll)
+                # Restart the level after few frames with timer
+                if self.dead:
+                    self.dead += 1
+                    if self.dead >= 10:
+                        self.transition = min(30, self.transition + 1)
+                    if self.dead > 40:
+                        self.load_level(self.level)
 
-            self.tilemap.render(self.display, offset=render_scroll)
+                # Updating the camera scroll with position towards the player and removing the area till that point from the top left along with
+                # Scrolling till that point and taking 30% of the total
+                self.scroll[0] += (
+                    self.player.rect().centerx
+                    - self.display.get_width() / 2
+                    - self.scroll[0]
+                ) / 30
+                self.scroll[1] += (
+                    self.player.rect().centery
+                    - self.display.get_height() / 2
+                    - self.scroll[1]
+                ) / 30
+                render_scroll = (int(self.scroll[0]), int(self.scroll[1]))
 
-            for enemy in self.enemies.copy():
-                kill = enemy.update(self.tilemap, (0, 0))
-                enemy.render(self.display, offset=render_scroll)
-                if kill:
-                    self.enemies.remove(enemy)
-
-            if not self.dead:
-                self.player.update(
-                    self.tilemap, (self.movement[1] - self.movement[0], 0)
-                )
-                self.player.render(self.display, offset=render_scroll)
-
-            # Projectiles
-            # [[x, y], direction, timer]
-            for projectile in self.projectiles.copy():
-                projectile[0][0] += projectile[1]
-                projectile[2] += 1
-                img = self.assets["projectile"]
-                self.display.blit(
-                    img,
-                    (
-                        projectile[0][0] - img.get_width() / 2 - render_scroll[0],
-                        projectile[0][1] - img.get_height() / 2 - render_scroll[1],
-                    ),
-                )
-                if self.tilemap.solid_check(projectile[0]):
-                    self.projectiles.remove(projectile)
-                    # Adding spark
-                    for i in range(4):
-                        self.sparks.append(
-                            Spark(
-                                projectile[0],
-                                random.random()
-                                - 0.5
-                                + (math.pi if projectile[1] > 0 else 0),
-                                2 + random.random(),
+                # Using 49999 as spawn rate for leaves falling
+                for rect in self.leaf_spawners:
+                    if random.random() * 49999 < rect.width * rect.height:
+                        pos = (
+                            rect.x + random.random() * rect.width,
+                            rect.y + random.random() * rect.height,
+                        )
+                        self.particles.append(
+                            Particle(
+                                self,
+                                "leaf",
+                                pos,
+                                velocity=[-0.1, 0.3],
+                                frame=random.randint(0, 20),
                             )
                         )
-                # if timer is greater than 6sec then remove it
-                elif projectile[2] > 360:
-                    self.projectiles.remove(projectile)
-                elif abs(self.player.dashing) < 50:
-                    if self.player.rect().collidepoint(projectile[0]):
+
+                self.clouds.update()
+                self.clouds.render(self.display_2, offset=render_scroll)
+
+                self.tilemap.render(self.display, offset=render_scroll)
+
+                for enemy in self.enemies.copy():
+                    kill = enemy.update(self.tilemap, (0, 0))
+                    enemy.render(self.display, offset=render_scroll)
+                    if kill:
+                        self.enemies.remove(enemy)
+
+                if not self.dead:
+                    self.player.update(
+                        self.tilemap, (self.movement[1] - self.movement[0], 0)
+                    )
+                    self.player.render(self.display, offset=render_scroll)
+
+                # Projectiles
+                # [[x, y], direction, timer]
+                for projectile in self.projectiles.copy():
+                    projectile[0][0] += projectile[1]
+                    projectile[2] += 1
+                    img = self.assets["projectile"]
+                    self.display.blit(
+                        img,
+                        (
+                            projectile[0][0] - img.get_width() / 2 - render_scroll[0],
+                            projectile[0][1] - img.get_height() / 2 - render_scroll[1],
+                        ),
+                    )
+                    if self.tilemap.solid_check(projectile[0]):
                         self.projectiles.remove(projectile)
-                        self.dead += 1
-                        self.sfx["hit"].play()
-                        self.screenshake = max(16, self.screenshake)
-                        # Player hit spark
-                        for i in range(30):
-                            angle = random.random() * math.pi * 2
-                            speed = random.random() * 5
+                        # Adding spark
+                        for i in range(4):
                             self.sparks.append(
                                 Spark(
-                                    self.player.rect().center,
-                                    angle,
+                                    projectile[0],
+                                    random.random()
+                                    - 0.5
+                                    + (math.pi if projectile[1] > 0 else 0),
                                     2 + random.random(),
                                 )
                             )
-                            self.particles.append(
-                                Particle(
-                                    self,
-                                    "particle",
-                                    self.player.rect().center,
-                                    velocity=[
-                                        math.cos(angle + math.pi) * speed * 0.5,
-                                        math.sin(angle + math.pi) * speed * 0.5,
-                                    ],
-                                    frame=random.randint(0, 7),
+                    # if timer is greater than 6sec then remove it
+                    elif projectile[2] > 360:
+                        self.projectiles.remove(projectile)
+                    elif abs(self.player.dashing) < 50:
+                        if self.player.rect().collidepoint(projectile[0]):
+                            self.projectiles.remove(projectile)
+                            self.dead += 1
+                            self.sfx["hit"].play()
+                            self.screenshake = max(16, self.screenshake)
+                            # Player hit spark
+                            for i in range(30):
+                                angle = random.random() * math.pi * 2
+                                speed = random.random() * 5
+                                self.sparks.append(
+                                    Spark(
+                                        self.player.rect().center,
+                                        angle,
+                                        2 + random.random(),
+                                    )
                                 )
-                            )
+                                self.particles.append(
+                                    Particle(
+                                        self,
+                                        "particle",
+                                        self.player.rect().center,
+                                        velocity=[
+                                            math.cos(angle + math.pi) * speed * 0.5,
+                                            math.sin(angle + math.pi) * speed * 0.5,
+                                        ],
+                                        frame=random.randint(0, 7),
+                                    )
+                                )
 
-            # Sparks
-            for spark in self.sparks.copy():
-                kill = spark.update()
-                spark.render(self.display, offset=render_scroll)
-                if kill:
-                    self.sparks.remove(spark)
+                # Sparks
+                for spark in self.sparks.copy():
+                    kill = spark.update()
+                    spark.render(self.display, offset=render_scroll)
+                    if kill:
+                        self.sparks.remove(spark)
 
-            # Making a mask for an outline surface
-            display_mask = pygame.mask.from_surface(self.display)
-            # setColor 180 is half of max opaque
-            display_sillhouette = display_mask.to_surface(
-                setcolor=(0, 0, 0, 180), unsetcolor=(0, 0, 0, 0)
-            )
-            for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                self.display_2.blit(display_sillhouette, offset)
-
-            # Particles
-            # Particles rendering and removing after animation done is true
-            for particle in self.particles.copy():
-                kill = particle.update()
-                particle.render(self.display, offset=render_scroll)
-                if particle.type == "leaf":
-                    particle.pos[0] += math.sin(particle.animation.frame * 0.035) * 0.3
-                if kill:
-                    self.particles.remove(particle)
-
-            # img_r = pygame.Rect(self.img_pos[0], self.img_pos[1], self.img.get_width(), self.img.get_height())
-            # if img_r.colliderect(self.collision_area):
-            #     pygame.draw.rect(self.screen, (0, 100, 255), self.collision_area)
-            # else:
-            #     pygame.draw.rect(self.screen, (0, 50, 155), self.collision_area)
-
-            # self.img_pos[1] += (self.movement[1] - self.movement[0])*5
-            # self.screen.blit(self.img, self.img_pos)
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_a:
-                        self.movement[0] = True
-                    if event.key == pygame.K_d:
-                        self.movement[1] = True
-                    if event.key == pygame.K_SPACE:
-                        if self.player.jump():
-                            self.sfx["jump"].play()
-                    if event.key == pygame.K_c:
-                        self.player.dash()
-                if event.type == pygame.KEYUP:
-                    if event.key == pygame.K_a:
-                        self.movement[0] = False
-                    if event.key == pygame.K_d:
-                        self.movement[1] = False
-
-            # Rendering Closing circle on the display
-            if self.transition:
-                transition_surf = pygame.Surface(self.display.get_size())
-                pygame.draw.circle(
-                    transition_surf,
-                    (255, 255, 255),
-                    (self.display.get_width() // 2, self.display.get_height() // 2),
-                    (30 - abs(self.transition)) * 8,
+                # Making a mask for an outline surface
+                display_mask = pygame.mask.from_surface(self.display)
+                # setColor 180 is half of max opaque
+                display_sillhouette = display_mask.to_surface(
+                    setcolor=(0, 0, 0, 180), unsetcolor=(0, 0, 0, 0)
                 )
-                transition_surf.set_colorkey((255, 255, 255))
-                self.display.blit(transition_surf, (0, 0))
+                for offset in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    self.display_2.blit(display_sillhouette, offset)
 
-            self.display_2.blit(self.display, (0, 0))
+                # Particles
+                # Particles rendering and removing after animation done is true
+                for particle in self.particles.copy():
+                    kill = particle.update()
+                    particle.render(self.display, offset=render_scroll)
+                    if particle.type == "leaf":
+                        particle.pos[0] += math.sin(particle.animation.frame * 0.035) * 0.3
+                    if kill:
+                        self.particles.remove(particle)
 
-            screenshake_offset = (
-                random.random() * self.screenshake - self.screenshake / 2,
-                random.random() * self.screenshake - self.screenshake / 2,
-            )
-            self.screen.blit(
-                pygame.transform.scale(self.display_2, self.screen.get_size()),
-                screenshake_offset,
-            )
-            pygame.display.update()
-            self.clock.tick(60)
+                # img_r = pygame.Rect(self.img_pos[0], self.img_pos[1], self.img.get_width(), self.img.get_height())
+                # if img_r.colliderect(self.collision_area):
+                #     pygame.draw.rect(self.screen, (0, 100, 255), self.collision_area)
+                # else:
+                #     pygame.draw.rect(self.screen, (0, 50, 155), self.collision_area)
 
+                # self.img_pos[1] += (self.movement[1] - self.movement[0])*5
+                # self.screen.blit(self.img, self.img_pos)
 
-Game().run()
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                        pygame.quit()
+                        sys.exit()
+                    if event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_ESCAPE:pass
+                            # self.curr_menu = PauseMenu(self).display_menu()
+                        if event.key == pygame.K_a:
+                            self.movement[0] = True
+                        if event.key == pygame.K_d:
+                            self.movement[1] = True
+                        if event.key == pygame.K_SPACE:
+                            if self.player.jump():
+                                self.sfx["jump"].play()
+                        if event.key == pygame.K_c:
+                            self.player.dash()
+                    if event.type == pygame.KEYUP:
+                        if event.key == pygame.K_a:
+                            self.movement[0] = False
+                        if event.key == pygame.K_d:
+                            self.movement[1] = False
+
+                # Rendering Closing circle on the display
+                if self.transition:
+                    transition_surf = pygame.Surface(self.display.get_size())
+                    pygame.draw.circle(
+                        transition_surf,
+                        (255, 255, 255),
+                        (self.display.get_width() // 2, self.display.get_height() // 2),
+                        (30 - abs(self.transition)) * 8,
+                    )
+                    transition_surf.set_colorkey((255, 255, 255))
+                    self.display.blit(transition_surf, (0, 0))
+
+                self.display_2.blit(self.display, (0, 0))
+
+                screenshake_offset = (
+                    random.random() * self.screenshake - self.screenshake / 2,
+                    random.random() * self.screenshake - self.screenshake / 2,
+                )
+                self.screen.blit(
+                    pygame.transform.scale(self.display_2, self.screen.get_size()),
+                    screenshake_offset,
+                )
+                pygame.display.update()
+                self.clock.tick(60)
+
+# Game().run()
