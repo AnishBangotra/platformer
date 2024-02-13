@@ -17,7 +17,7 @@ class Game:
         self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY = False, False, False, False
         self.DISPLAY_W, self.DISPLAY_H = 640, 480
 
-        self.screen = pygame.display.set_mode((self.DISPLAY_W, self.DISPLAY_H), pygame.RESIZABLE)
+        self.screen = pygame.display.set_mode((self.DISPLAY_W, self.DISPLAY_H))
         self.bg_count = 0
         self.menu_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
         self.pause_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
@@ -83,6 +83,10 @@ class Game:
         text_rect.center = (x, y)
         surface.blit(text_surface, text_rect)
         return text_rect
+
+    def setCurrMenu(self, menu):
+        pygame.mixer.Sound.stop(self.sfx['ambience'])
+        self.curr_menu = menu(self).display_menu()
 
     def load_level(self, map_id):
         # self.tilemap.load("map.json");
@@ -302,8 +306,8 @@ class Game:
                         pygame.quit()
                         sys.exit()
                     if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:pass
-                            # self.curr_menu = PauseMenu(self).display_menu()
+                        if event.key == pygame.K_ESCAPE:
+                            self.curr_menu = PauseMenu(self).display_menu()
                         if event.key == pygame.K_a:
                             self.movement[0] = True
                         if event.key == pygame.K_d:

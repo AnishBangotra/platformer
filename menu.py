@@ -79,13 +79,15 @@ class PauseMenu(Menu):
     
     def display_menu(self):
         self.resume_text = 'Resume'
+        self.options_text = 'Options'
         self.exit_text = 'Exit to Main Menu'
-        
+
         while self.run_pause_display:
             # Tracking mouse events
             mx, my = pygame.mouse.get_pos()
 
-            resume_rect = self.game.draw_text(self.resume_text, 50, self.WHITE, self.game.pause_display, self.startx, self.starty)
+            resume_rect = self.game.draw_text(self.resume_text, 50, self.WHITE, self.game.pause_display, self.startx, self.starty - 50)
+            options_rect = self.game.draw_text(self.options_text, 30, self.WHITE, self.game.pause_display, self.startx, self.starty + 50)
             exit_rect = self.game.draw_text(self.exit_text, 30, self.WHITE, self.game.pause_display, self.startx, self.starty + 100)
             
             # Execute Actions
@@ -97,8 +99,9 @@ class PauseMenu(Menu):
                 if self.click:
                     # self.game.running = False
                     self.run_pause_display = False
-                    self.game.playing = False
-                    break
+                    pygame.mixer.music.stop()
+                    # pygame.mixer.Sound.stop()
+                    self.game.setCurrMenu(MainMenu)
 
             self.click = False            
             for event in pygame.event.get():
