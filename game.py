@@ -14,18 +14,26 @@ class Game:
         pygame.display.set_caption("Ninja Game")
         self.running = True
         self.playing = True
-        self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY = False, False, False, False
+        self.UP_KEY, self.DOWN_KEY, self.START_KEY, self.BACK_KEY = (
+            False,
+            False,
+            False,
+            False,
+        )
         self.DISPLAY_W, self.DISPLAY_H = 640, 480
 
-        self.screen = pygame.display.set_mode((self.DISPLAY_W, self.DISPLAY_H))
+        self.screen = pygame.display.set_mode(
+            (self.DISPLAY_W, self.DISPLAY_H), pygame.FULLSCREEN
+        )
         self.bg_count = 0
         self.menu_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
         self.pause_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
+        self.options_display = pygame.Surface((self.DISPLAY_W, self.DISPLAY_H))
         self.display = pygame.Surface((320, 240), pygame.SRCALPHA)
         self.display_2 = pygame.Surface((320, 240))
         self.main_menu = MainMenu(self)
         self.curr_menu = self.main_menu
-        self.font_name1 = 'LobsterTwo-Bold.otf'
+        self.font_name1 = "LobsterTwo-Bold.otf"
         self.font_name = pygame.font.get_default_font()
         self.clock = pygame.time.Clock()
 
@@ -55,7 +63,7 @@ class Game:
         }
 
         self.sfx = {
-            "jump": pygame.mixer.Sound("data/data/sfx/jump.wav"),
+            "jump": pygame.mixer.Sound("data/data/sfx/whoosh.wav"),
             "dash": pygame.mixer.Sound("data/data/sfx/dash.wav"),
             "hit": pygame.mixer.Sound("data/data/sfx/hit.wav"),
             "shoot": pygame.mixer.Sound("data/data/sfx/shoot.wav"),
@@ -65,7 +73,7 @@ class Game:
         self.sfx["dash"].set_volume(0.4)
         self.sfx["hit"].set_volume(0.8)
         self.sfx["shoot"].set_volume(0.3)
-        self.sfx["jump"].set_volume(0.7)
+        self.sfx["jump"].set_volume(1.0)
 
         self.clouds = Clouds(self.assets["clouds"], count=16)
         self.movement = [False, False]
@@ -76,6 +84,13 @@ class Game:
         self.screenshake = 0
         # self.tilemap.load('map.json')
 
+    def draw_hover_text(self, text, size, color, surface, x, y):
+        font = pygame.font.Font(self.font_name1, size)
+        text_surface = font.render(text, True, color)
+        text_rect = text_surface.get_rect()
+        text_rect.center = (x, y)
+        surface.blit(text_surface, text_rect)
+
     def draw_text(self, text, size, color, surface, x, y):
         font = pygame.font.Font(self.font_name1, size)
         text_surface = font.render(text, True, color)
@@ -85,7 +100,7 @@ class Game:
         return text_rect
 
     def setCurrMenu(self, menu):
-        pygame.mixer.Sound.stop(self.sfx['ambience'])
+        pygame.mixer.Sound.stop(self.sfx["ambience"])
         self.curr_menu = menu(self).display_menu()
 
     def load_level(self, map_id):
@@ -287,7 +302,9 @@ class Game:
                     kill = particle.update()
                     particle.render(self.display, offset=render_scroll)
                     if particle.type == "leaf":
-                        particle.pos[0] += math.sin(particle.animation.frame * 0.035) * 0.3
+                        particle.pos[0] += (
+                            math.sin(particle.animation.frame * 0.035) * 0.3
+                        )
                     if kill:
                         self.particles.remove(particle)
 
